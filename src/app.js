@@ -1,21 +1,32 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+const express = require('express')
+const bodyParser = require('body-parser')
 const {sequelize} = require('./model')
+const Sequelize = require('sequelize')
 const {getProfile} = require('./middleware/getProfile')
-const app = express();
-app.use(bodyParser.json());
-app.set('sequelize', sequelize)
-app.set('models', sequelize.models)
 
-/**
- * FIX ME!
- * @returns contract by id
- */
-app.get('/contracts/:id',getProfile ,async (req, res) =>{
-    const {Contract} = req.app.get('models')
-    const {id} = req.params
-    const contract = await Contract.findOne({where: {id}})
-    if(!contract) return res.status(404).end()
-    res.json(contract)
+const ContractController = require('./controllers/contract')
+const JobController = require('./controllers/job')
+const BalanceController = require('./controllers/balance')
+const AdminController = require('./controllers/admin')
+const {transactioned} = require('./middleware/transactioned')
+
+const app = express()
+app.use(bodyParser.json())
+
+app.get('/contracts/:id', getProfile, ContractController.getContractById)
+app.get('/contracts', getProfile, ContractController.getContractsForUser)
+
+app.get('/jobs/unpaid', getProfile, JobController.getUnpaidJobs)
+app.post('/jobs/:jobId/pay', getProfile, JobController.payForJob)
+
+app.post('/balances/deposit/:userId', BalanceController.deposit)
+
+app.get('/admin/best-profession', AdminController.getBestProfession)
+app.get('/admin/best-clients', AdminController.getBestClients)
+
+app.use((err, req, res, next) => {
+  console.error(err.stack)
+  res.status(500).send('Something broke!')
 })
-module.exports = app;
+
+module.exports = app

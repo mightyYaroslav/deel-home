@@ -1,5 +1,9 @@
 const Sequelize = require('sequelize');
 
+const cls = require('cls-hooked');
+const namespace = cls.createNamespace('sequelize-ns');
+Sequelize.useCLS(namespace);
+
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: './database.sqlite3'
@@ -76,14 +80,17 @@ Job.init(
 );
 
 Profile.hasMany(Contract, {as :'Contractor',foreignKey:'ContractorId'})
-Contract.belongsTo(Profile, {as: 'Contractor'})
 Profile.hasMany(Contract, {as : 'Client', foreignKey:'ClientId'})
+
+Contract.belongsTo(Profile, {as: 'Contractor'})
 Contract.belongsTo(Profile, {as: 'Client'})
 Contract.hasMany(Job)
+
 Job.belongsTo(Contract)
 
 module.exports = {
   sequelize,
+  namespace,
   Profile,
   Contract,
   Job

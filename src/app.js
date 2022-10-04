@@ -1,14 +1,11 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const {sequelize} = require('./model')
-const Sequelize = require('sequelize')
 const {getProfile} = require('./middleware/getProfile')
 
 const ContractController = require('./controllers/contract')
 const JobController = require('./controllers/job')
 const BalanceController = require('./controllers/balance')
 const AdminController = require('./controllers/admin')
-const {transactioned} = require('./middleware/transactioned')
 
 const app = express()
 app.use(bodyParser.json())

@@ -30,23 +30,48 @@ class ProfileRepo {
   }
 
   async getTopClients(startDate, endDate, limit) {
-    return await Profile.findAll({
-      // limit: limit ?? 2, // TODO: Fix me
+    // Unfortunately sequelize goes wild with query like this one
+    // return await Profile.findAll({
+    //   limit: limit ?? 2,
+    //   group: 'Profile.id',
+    //   order: [sequelize.literal('sum(price) DESC')],
+    //   include: [
+    //     {
+    //       model: Contract, as: 'Client', separate: true, include: [{
+    //         model: Job, as: 'Jobs', where: {
+    //           createdAt: {
+    //             ...(startDate && {[Op.gte]: startDate.toISOString()}),
+    //             ...(endDate && {[Op.lte]: endDate.toISOString()}),
+    //           },
+    //         },
+    //       }],
+    //     },
+    //   ],
+    // })
+    // so here is sub-query based version, though it is error-prone, it is expected for the variables to be validated in advance
+    const topClients = await Profile.findAll({
+      attributes: {
+        include: [
+          [
+            sequelize.literal(`(
+            select sum(price) from Jobs
+            where Jobs.ContractId in (
+              select id from Contracts where
+              Contracts.ClientId = Profile.id
+            ) and createdAt between '${startDate.toISOString()}' and '${endDate.toISOString()}'
+            and paid = 1
+            )`),
+            `pricesSum`,
+          ],
+        ],
+      },
+      limit: limit ?? 2,
       group: 'Profile.id',
-      order: [sequelize.literal('sum(price) DESC')],
-      include: [
-        {
-          model: Contract, as: 'Client', separate: true, include: [{
-            model: Job, as: 'Jobs', where: {
-              createdAt: {
-                ...(startDate && {[Op.gte]: startDate.toISOString()}),
-                ...(endDate && {[Op.lte]: endDate.toISOString()}),
-              },
-            },
-          }],
-        },
-      ],
+      where: {type: 'client'},
+      order: [[sequelize.literal('pricesSum'), 'DESC']],
     })
+    return topClients.map(c => c.toJSON())
+
   }
 
   async getContracts(userId) {

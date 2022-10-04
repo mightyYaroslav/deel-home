@@ -10,8 +10,12 @@ class AdminController {
 
   async getBestClients(req, res) {
     const {start, end, limit} = req.query
-    const topClients = ProfileRepo.getTopClients(new Date(start), new Date(end), limit)
-    return res.json(topClients)
+    const topClients = await ProfileRepo.getTopClients(new Date(start), new Date(end), limit)
+    return res.json(topClients.map(c => ({
+      id: c.id,
+      fullName: `${c.firstName} ${c.lastName}`,
+      paid: c.pricesSum,
+    })))
   }
 
 }

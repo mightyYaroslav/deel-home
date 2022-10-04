@@ -1,4 +1,4 @@
-// does not work
+// Unfortunately, could not make it work :sadfrog:
 
 const {sequelize, namespace} = require('../model')
 const transactioned = async (req, res, next) => {
